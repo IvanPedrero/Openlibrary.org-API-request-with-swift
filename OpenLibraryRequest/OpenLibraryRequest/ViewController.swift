@@ -87,8 +87,24 @@ class ViewController: UIViewController {
             let isbnDict = dict["ISBN:"+isbnText] as! NSDictionary
             
             // Get information dictionaries from main dictionaries.
-            let authorArray = isbnDict["authors"] as! NSArray
-            let titleString = isbnDict["title"] as! NSString as String
+            
+            // Check for title.
+            var titleString = "No title available"
+            if(isbnDict["title"] != nil){
+                titleString = isbnDict["title"] as! NSString as String
+            }
+            // Check for authors.
+            var authorStringArray:Array<String> = []
+            if(isbnDict["authors"] != nil){
+                let authorArray = isbnDict["authors"] as? NSArray
+                for autor in (authorArray!) {
+                    let autorDic = autor as! NSDictionary
+                    authorStringArray.append(((autorDic["name"] as! NSString) as String))
+                    print(authorStringArray)
+                }
+            }else{
+                authorStringArray.append("No author available")
+            }
             
             // Check for cover.
             var coverLink = ""
@@ -100,7 +116,7 @@ class ViewController: UIViewController {
             }
             
             // Assign the values in the text view.
-            assignRequestValues(title: titleString, authors: authorArray, coverURL: coverLink)
+            assignRequestValues(title: titleString, authors: authorStringArray, coverURL: coverLink)
         }
         catch
         {
@@ -112,7 +128,7 @@ class ViewController: UIViewController {
     /**
             This function will set the values parsed from the JSON in the text view and image view.
      */
-    func assignRequestValues(title:String, authors:NSArray, coverURL:String){
+    func assignRequestValues(title:String, authors:Array<String>, coverURL:String){
         // In this string, the info will be stored.
         var requestString = ""
         
@@ -124,8 +140,7 @@ class ViewController: UIViewController {
         
         // Assign the authors.
         for autor in (authors) {
-            let autorDic = autor as! NSDictionary
-            requestString += "\nAuthor : " + ((autorDic["name"] as! NSString) as String) + "\n"
+            requestString += "\nAuthor : " + autor + "\n"
         }
         
         // Add the image to the image view.
