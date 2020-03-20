@@ -19,6 +19,7 @@ class ViewController: UIViewController {
     // Search button action.
     @IBAction func searchButtonAction(_ sender: UIButton) {
         // Get the text from the text field.
+        // An example of this would be: 978-84-376-0494-7
         let isbn:String? = isbnText.text
         
         // Avoid errors.
@@ -57,14 +58,63 @@ class ViewController: UIViewController {
         // Create the task.
         let task = URLSession.shared.dataTask(with: url) {(data, response, error) in
             guard let data = data else { return }
-            // Make sure the text is going to be updated in the main thread.
             DispatchQueue.main.async {
-                self.responseTextView.text = String(data: data, encoding: .utf8)!
+                self.processRequestData(dataString: data, isbnText: isbnText)
             }
+            
         }
         
         // Resume the task.
         task.resume()
+    }
+    
+    
+    /**
+     This function will process the Data object into a JSON object for management into dictionaries,
+     */
+    func processRequestData(dataString:Data, isbnText:String){
+        
+        do
+        {
+            let json = try JSONSerialization.jsonObject(with: dataString, options: []) as? [String : Any]
+            
+            // Get main dictionaries.
+            let dict = json! as NSDictionary
+            let isbnDict = dict["ISBN:"+isbnText] as! NSDictionary
+            
+            // Get information dictionaries from main dictionaries.
+            let authorArray = isbnDict["authors"] as! NSArray
+            let titleString = isbnDict["title"] as! NSString as String
+            let coverLink = (isbnDict["cover"] as! NSDictionary)["medium"] as! NSString as String
+            
+            // Assign the values in the text view.
+            assignRequestValues(title: titleString, authors: authorArray, coverURL: coverLink)
+        }
+        catch
+        {
+            showAlert(alertMessage: "Error while parsing JSON.")
+        }
+    }
+    
+    
+    func assignRequestValues(title:String, authors:NSArray, coverURL:String){
+        // In this string, the info will be stored.
+        var requestString = ""
+        
+        // Assign title
+        requestString += "Title : "+title + "\n"
+        
+        // Assign the authors.
+        for autor in (authors) {
+            let autorDic = autor as! NSDictionary
+            requestString += "\nAutor : " + ((autorDic["name"] as! NSString) as String) + "\n"
+        }
+        
+        // TODO: Add it to an image view.
+        // Add the image.
+        requestString += "\nImage : " + coverURL
+        
+        self.responseTextView.text = requestString
     }
     
     
