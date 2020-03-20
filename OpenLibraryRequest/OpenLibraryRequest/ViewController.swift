@@ -13,8 +13,12 @@ class ViewController: UIViewController {
     // Reference to the search text.
     @IBOutlet weak var isbnText: UITextField!
     
-    // Reference to the resposne text view.
+    // Reference to the resposnse text view.
     @IBOutlet weak var responseTextView: UITextView!
+    
+    // Reference to the image view for cover.
+    @IBOutlet weak var coverImage: UIImageView!
+    
     
     // Search button action.
     @IBAction func searchButtonAction(_ sender: UIButton) {
@@ -70,10 +74,10 @@ class ViewController: UIViewController {
     
     
     /**
-     This function will process the Data object into a JSON object for management into dictionaries,
+            This function will process the Data object into a JSON object for management into dictionaries and strings,
      */
     func processRequestData(dataString:Data, isbnText:String){
-        
+        // Process the Data as JSON.
         do
         {
             let json = try JSONSerialization.jsonObject(with: dataString, options: []) as? [String : Any]
@@ -85,7 +89,15 @@ class ViewController: UIViewController {
             // Get information dictionaries from main dictionaries.
             let authorArray = isbnDict["authors"] as! NSArray
             let titleString = isbnDict["title"] as! NSString as String
-            let coverLink = (isbnDict["cover"] as! NSDictionary)["medium"] as! NSString as String
+            
+            // Check for cover.
+            var coverLink = ""
+            if(isbnDict["cover"] != nil){
+                coverLink = (isbnDict["cover"] as! NSDictionary)["medium"] as! NSString as String
+            }else{
+                // Add a placeholder cover if none available
+                coverLink = "https://images.squarespace-cdn.com/content/v1/5a5547e1a803bb7df0649e50/1569021071787-GQ6QWL4IMADHSY7W7VH2/ke17ZwdGBToddI8pDm48kKDp-7ip__g8QobJS6Y5m3dZw-zPPgdn4jUwVcJE1ZvWEtT5uBSRWt4vQZAgTJucoTqqXjS3CfNDSuuf31e0tVFhb23Mwiwo3IFHbJH9edcC4_w0H8oueJbNNKCuHf_kD6QvevUbj177dmcMs1F0H-0/placeholder.png?format=500w"
+            }
             
             // Assign the values in the text view.
             assignRequestValues(title: titleString, authors: authorArray, coverURL: coverLink)
@@ -97,23 +109,34 @@ class ViewController: UIViewController {
     }
     
     
+    /**
+            This function will set the values parsed from the JSON in the text view and image view.
+     */
     func assignRequestValues(title:String, authors:NSArray, coverURL:String){
         // In this string, the info will be stored.
         var requestString = ""
         
-        // Assign title
-        requestString += "Title : "+title + "\n"
+        // Check for title existence.
+        if(title != ""){
+            // Assign title
+            requestString += "Title : "+title + "\n"
+        }
         
         // Assign the authors.
         for autor in (authors) {
             let autorDic = autor as! NSDictionary
-            requestString += "\nAutor : " + ((autorDic["name"] as! NSString) as String) + "\n"
+            requestString += "\nAuthor : " + ((autorDic["name"] as! NSString) as String) + "\n"
         }
         
-        // TODO: Add it to an image view.
-        // Add the image.
-        requestString += "\nImage : " + coverURL
+        // Add the image to the image view.
+        let url = URL(string: coverURL)
+        let data = try? Data(contentsOf: url!)
+        if let imageData = data {
+            let image = UIImage(data: imageData)
+            coverImage.image = image
+        }
         
+        // Assign the text to the text view.
         self.responseTextView.text = requestString
     }
     
@@ -124,6 +147,9 @@ class ViewController: UIViewController {
     func clearResponseTextView(){
         // Clear the text.
         responseTextView.text = ""
+        
+        // Clear the image.
+        coverImage.image = nil
     }
     
     
